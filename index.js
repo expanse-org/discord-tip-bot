@@ -161,7 +161,7 @@ bot.on('message', message => {
 			}
 		}
 		// main function
-		rainSend(data.address);
+		rainSend(latest);
 	}
 
 	if(message.content.startsWith(prefix + "checkaddress")){
