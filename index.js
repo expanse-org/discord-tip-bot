@@ -214,19 +214,22 @@ bot.on('message', message => {
 			message.channel.send("@" + author + " try to registered wrong address. Try another one.");
 		}
 	}
-
 	if(message.content.startsWith(prefix + "changeRegister")){
 		var author = message.author.username;
 		var address = args[1];
 		if(web3.utils.isAddress(args[1])){
 			var data = getJson();
 			if(Object.keys(data).includes(author)){
-				data[author] = address;
-				fs.writeFile(botSettings.path, JSON.stringify(data), (err) => {
-				  if (err) throw err;
-				  console.log('The file has been changed.');
-				});	
-				message.channel.send("@" + author + " changed register address to the: " + address);
+				if(address != data[author]){
+					data[author] = address;
+					fs.writeFile(botSettings.path, JSON.stringify(data), (err) => {
+				  		if (err) throw err;
+				  		console.log('The file has been changed.');
+					});	
+					message.channel.send("@" + author + " changed register address to the: " + address);
+				} else {
+					message.channel.send("Use another address if you wanna change old one.");
+				}
 			} else {
 				message.channel.send("You are not in the list, use **/register** command fist.");
 			}
