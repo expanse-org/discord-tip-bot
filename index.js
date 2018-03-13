@@ -12,7 +12,7 @@ const prefix = botSettings.prefix;
 const bot = new Discord.Client({disableEveryone:true});
 
 var web3 = new Web3();
-var n = require('nonce')();
+//var n = require('nonce')();
 
 web3.setProvider(new web3.providers.HttpProvider('http://localhost:9656'));
 const privateKey = new Buffer(botSettings.privateKey,'hex');
@@ -54,9 +54,10 @@ function getJson(){
 async function sendCoins(address,value,message){
 	let privateData = await web3.eth.accounts.privateKeyToAccount("0x" + botSettings.privateKey);
 	let lastBlock = await web3.eth.getBlock("latest");
-   
+      	let txCount = await web3.eth.getTransactionCount(privateData.address,"pending");
+   	console.log(txCount);
    	var rawTx = {
-		nonce: n(),
+		nonce: txCount,
 		gasPrice: web3.utils.toHex(1000000000), 
 		gasLimit:  web3.utils.toHex(lastBlock.gasLimit), 
 		to: address, 
@@ -187,7 +188,8 @@ bot.on('message', message => {
 	}
 
 	if(message.content === prefix + "getaddress"){
-		message.channel.send("Bots address is " + localAddress);
+		let balance = await web3.eth.getBalance(localAddress)/Math.pow(10,18);
+		message.channel.send("Bots address is " + localAddress + " with: **" + Number(balance).toFixed(3) + "** EXP.");
 	}
 	
 	if(message.content.startsWith("/register")){
@@ -238,17 +240,27 @@ bot.on('message', message => {
 		message.channel.send("List of registered users: " + String(Object.keys(data))+ ".");
 
 	}
+	if(message.content == prefix + "checkRegister"){
+		let author = message.author.username;
+		let data = getJson();
+		if(Object.keys(data).includes(author)){
+			message.channel.send("@"+author + " already registered.");
+		} else {
+			message.channel.send("You are not in the list, use **/register** command fist.");
+		}
+	}
 
 	if(message.content === prefix + "help"){
 		message.channel.send("ExpTipBit commands:\n"+
-			"**/checkaddress** *<address>* -  show EXP balance on the following address \n"+
-			"**/sendToAddress** *<address>* *<amount>* - send EXP to the following address (Admin Only)\n"+
-			"**/send** *<name>* *<amount>* send EXP to the following user (Admin Only)\n"+
-			"**/rain** *<amount>* - send EXP to all registered address's ((Admin Only)).\n"+
-			"**/getaddress** - shows bot address so everyone can fund it. \n" + 
-			"**/register** *<address>*  - saves user address and name to db. \n"+
-			"**/changeRegister** *<address>* -  change your register address.\n"+
-			"**/list** - shows all registered users.");
+			"**"+prefix+"checkaddress** *<address>* -  show EXP balance on the following address \n"+
+			"**"+prefix+"sendToAddress** *<address>* *<amount>* - send EXP to the following address (Admin Only)\n"+
+			"**"+prefix+"send** *<name>* *<amount>* send EXP to the following user (Admin Only)\n"+
+			"**"+prefix+"rain** *<amount>* - send EXP to all registered address's (Admin Only).\n"+
+			"**"+prefix+"getaddress** - shows bot address so everyone can fund it. \n" + 
+			"**"+prefix+"register** *<address>*  - saves user address and name to db. \n"+
+			"**"+prefix+"changeRegister** *<address>* -  change your register address.\n"+
+			"**"+prefix+"checkRegister** -  return registered you or not.\n"+
+			"**"+prefix+"list** - shows all registered users.");
 	}
 })
 
