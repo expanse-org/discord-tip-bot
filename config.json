@@ -1,5 +1,5 @@
 {
-	"privateKey": "",
+	"address": "",
 	"token":"",
 	"path": "data/users.json",
 	"prefix": "/"
