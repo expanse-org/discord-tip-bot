@@ -55,8 +55,8 @@ function getJson(){
 
 
 bot.on('message',async message => {
-	// Users cannot use bot in general channel
-	if(message.channel.name === 'general') return;
+	// Not admins cannot use bot in general channel
+	if(message.channel.name === 'general' && !message.member.hasPermission('ADMINISTRATOR')) return;
 	if(message.author.bot) return;
 	if(message.channel.type === "dm") return;
 
