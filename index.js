@@ -19,7 +19,6 @@ bot.on('ready', ()=>{
 	console.log("Bot is ready for work");
 });
 
-
 function sendCoins(address,value,message){
 	web3.eth.sendTransaction({
 	    from: botSettings.address,
@@ -54,7 +53,10 @@ function getJson(){
 }
 
 
+
 bot.on('message',async message => {
+	// Users cannot use bot in general channel
+	if(message.channel.name === 'general') return;
 	if(message.author.bot) return;
 	if(message.channel.type === "dm") return;
 
@@ -112,13 +114,11 @@ bot.on('message',async message => {
 		} 
 		// registered users
 		var data = getJson();
-
 		// online users
 		var onlineUsers = getOnline();
 		// create online and register array
  		var onlineAndRegister = Object.keys(data).filter(username => {return onlineUsers.indexOf(username)!=-1});
- 	 	// array with online addresses
- 	 	
+ 	 	// array with online addresses 	
 		var latest = [];
 		for (let user of onlineAndRegister) {
 		  if (data[user]) {
@@ -138,6 +138,10 @@ bot.on('message',async message => {
 		}
 		// main function
 		rainSend(latest);
+	}
+	// TO DO
+	if(message.content.startsWith(prefix + "setRain")){	
+	
 	}
 
 	if(message.content.startsWith(prefix + "balance")){
@@ -216,7 +220,7 @@ bot.on('message',async message => {
 	//-------------------------------------
 	if(message.content == prefix + "list"){
 		var data = getJson();	
-		message.channel.send("List of registered users: " + String(Object.keys(data))+ ".");
+		message.channel.send("Number of registered users: **" + Object.keys(data).length+ "**.");
 
 	}
 	if(message.content == prefix + "checkRegister"){
@@ -234,12 +238,12 @@ bot.on('message',async message => {
 			"**"+prefix+"balance** *<address>* -  show EXP balance on the following address \n"+
 			"**"+prefix+"sendToAddress** *<address>* *<amount>* - send EXP to the following address (Admin Only)\n"+
 			"**"+prefix+"send** *<name>* *<amount>* send EXP to the following user (Admin Only)\n"+
-			"**"+prefix+"rain** *<amount>* - send EXP to all registered address's (Admin Only).\n"+
+			"**"+prefix+"rain** *<amount>* - send EXP to all registered and online address's (Admin Only).\n"+
 			"**"+prefix+"getaddress** - shows bot address so everyone can fund it. \n" + 
 			"**"+prefix+"register** *<address>*  - saves user address and name to db. \n"+
 			"**"+prefix+"changeRegister** *<address>* -  change your register address.\n"+
 			"**"+prefix+"checkRegister** -  return registered you or not.\n"+
-			"**"+prefix+"list** - shows all registered users.");
+			"**"+prefix+"list** - shows number of registered users.");
 	}
 })
 
