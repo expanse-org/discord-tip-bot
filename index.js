@@ -64,35 +64,35 @@ bot.on('message',async message => {
 
 	if(message.content.startsWith(prefix + "sendToAddress ")){ 
 		if(!message.member.hasPermission('ADMINISTRATOR')){
-			return message.channel.send("You cannot use '/send' command");
+			return message.channel.send("You cannot use '/send' command.");
 		} 
 		let address = args[1];
 		let amount = Number(args[2]);
 		// if use wrong amount (string or something)
-		if (!amount) return message.channel.send("Error with wrong amount");
+		if (!amount) return message.channel.send("Error with wrong amount.");
 		let weiAmount = amount*Math.pow(10,18);
 
 		if(web3.utils.isAddress(args[1])){
 			if(amount>10){
-				message.channel.send("You try to send more that 10 EXP ");
+				message.channel.send("You try to send more that 10 EXP.");
 			} else {
 				// main function
 				sendCoins(address,weiAmount,message);
-				message.channel.send("You try to send " + amount + " Exp to " + address + " address.");
+				message.channel.send("You try to send " + amount + " EXP to " + address + " address.");
 			}
 		} else {
-			message.channel.send("Wrong address to send");
+			message.channel.send("Wrong address to send.");
 		}
 	}
 
 	if(message.content.startsWith(prefix + "send ")){
 		if(!message.member.hasPermission('ADMINISTRATOR')){
-			return message.channel.send("You cannot use '/send' command");
+			return message.channel.send("You cannot use '/send' command.");
 		}
 		let user = args[1];
 		let amount = Number(args[2]);
 		// if use wrong amount (string or something)
-		if (!amount) return message.channel.send("Error - you've entered wrong amount");
+		if (!amount) return message.channel.send("Error - you've entered wrong amount.");
 		
 		let weiAmount = amount*Math.pow(10,18);
 		let data = getJson();
@@ -129,7 +129,7 @@ bot.on('message',async message => {
 		if (!amount) return message.channel.send("Error - you've entered wrong amount");
 		var weiAmount = amount*Math.pow(10,18);
 		
-		message.channel.send("**Rain started**.\n**" + args[1] + "** EXP will be distributed between online and regitered users - **" + latest.length + "** users." );
+		message.channel.send("**Rain started**.\n**" + args[1] + "** EXP will be distributed between online and registered users - **" + latest.length + "** users." );
 		
 		function rainSend(addresses){
 			for(const address of addresses){
@@ -154,11 +154,11 @@ bot.on('message',async message => {
 					if(!error){
 						var balance = (result/Math.pow(10,18)).toFixed(3);
 						if(balance > 10000){
-								message.channel.send("This balance has: **" + balance + "** EXP, congrats, you are Exp whale.");
+								message.channel.send("This balance has: **" + balance + "** EXP, congrats, you are an EXP whale.");
 						} else if(balance == 0){
 								message.channel.send("This balance empty, it has: **" + balance + "** EXP.");
 						} else {
-								message.channel.send("Your balance is **" + balance + "** EXP, you need more Exp  to became a whale.");
+								message.channel.send("Your balance is **" + balance + "** EXP, you need more EXP  to become a whale.");
 						}
 					}
 				})
@@ -174,14 +174,14 @@ bot.on('message',async message => {
 					} else if(balance == 0){
 						message.channel.send("This balance empty, it has: **" + balance + "** EXP.");
 					} else {
-						message.channel.send("Your balance is **" + balance + "** EXP, you need more Exp  to became a whale.");
+						message.channel.send("Your balance is **" + balance + "** EXP, you need more EXP  to become a whale.");
 					}
 				} else {
-					message.channel.send("Oops, some problems with your address");
+					message.channel.send("Oops, some problem occured with your address.");
 				}
 			})
 		} else {
-			message.channel.send("Wrong address, try another one");
+			message.channel.send("Wrong address, try another one.");
 		}	
 	}
 
@@ -206,7 +206,7 @@ bot.on('message',async message => {
 				});	
 				
 			} else {
-				message.channel.send("You already registered.");
+				message.channel.send("You have already registered.");
 			}
 		} else {
 			message.channel.send("@" + author + " tried to register wrong address. Try another one. Correct format is **/register 0xAddress**");
@@ -225,7 +225,7 @@ bot.on('message',async message => {
 				  		if (err) throw err;
 				  		console.log('The file has been changed.');
 					});	
-					message.channel.send("@" + author + " changed register address to the: " + address);
+					message.channel.send("@" + author + " changed register address to " + address);
 				} else {
 					message.channel.send("Use another address if you're trying to change your old one.")
 				}
@@ -239,7 +239,7 @@ bot.on('message',async message => {
 	//-------------------------------------
 	if(message.content == prefix + "list"){
 		var data = getJson();	
-		message.channel.send("Number of registered users: **" + Object.keys(data).length+ "**.");
+		message.channel.send("Total amount of registered users is **" + Object.keys(data).length+ "**.");
 
 	}
 	if(message.content == prefix + "checkRegister"){
@@ -257,11 +257,11 @@ bot.on('message',async message => {
 			"**"+prefix+"balance** *<address>* -  show EXP balance on the following address \n"+
 			"**"+prefix+"sendToAddress** *<address>* *<amount>* - send EXP to the following address (Admin Only)\n"+
 			"**"+prefix+"send** *<name>* *<amount>* send EXP to the following user (Admin Only)\n"+
-			"**"+prefix+"rain** *<amount>* - send EXP to all registered and online address's (Admin Only).\n"+
-			"**"+prefix+"getaddress** - shows bot address so everyone can fund it. \n" + 
+			"**"+prefix+"rain** *<amount>* - send EXP to all registered and online addresses (Admin Only).\n"+
+			"**"+prefix+"getaddress** - shows bot's address so everyone can fund it. \n" +
 			"**"+prefix+"register** *<address>*  - saves user address and name to db. \n"+
-			"**"+prefix+"changeRegister** *<address>* -  change your register address.\n"+
-			"**"+prefix+"checkRegister** -  return registered you or not.\n"+
+			"**"+prefix+"changeRegister** *<address>* -  change your registered address.\n"+
+			"**"+prefix+"checkRegister** -  find whether you're registered or not.\n"+
 			"**"+prefix+"list** - shows number of registered users.");
 	}
 })
