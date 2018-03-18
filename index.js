@@ -59,7 +59,6 @@ bot.on('message',async message => {
 	if(message.channel.name === 'general' && !message.member.hasPermission('ADMINISTRATOR')) return;
 	if(message.author.bot) return;
 	if(message.channel.type === "dm") return;
-
 	var message = message;
 	let args = message.content.split(' ');
 
@@ -93,7 +92,7 @@ bot.on('message',async message => {
 		let user = args[1];
 		let amount = Number(args[2]);
 		// if use wrong amount (string or something)
-		if (!amount) return message.channel.send("Error with wrong amount");
+		if (!amount) return message.channel.send("Error - you've entered wrong amount");
 		
 		let weiAmount = amount*Math.pow(10,18);
 		let data = getJson();
@@ -103,7 +102,7 @@ bot.on('message',async message => {
 			sendCoins(address,weiAmount,message); // main function
 			message.channel.send("You try to send " + amount+ " EXP to @"+user  );
 		} else {
-			message.channel.send("This user are not registered.");
+			message.channel.send("This user is not registered.");
 		}
 
 	}
@@ -127,10 +126,11 @@ bot.on('message',async message => {
 		}
 		var amount = Number(args[1])/latest.length;
 		// if use wrong amount (string or something)
-		if (!amount) return message.channel.send("Error with wrong amount");
+		if (!amount) return message.channel.send("Error - you've entered wrong amount");
 		var weiAmount = amount*Math.pow(10,18);
 		
 		message.channel.send("**Rain started**.\n**" + args[1] + "** EXP will be distributed between online and regitered users - **" + latest.length + "** users." );
+		
 		function rainSend(addresses){
 			for(const address of addresses){
 				sendCoins(address,weiAmount,message);
@@ -141,11 +141,30 @@ bot.on('message',async message => {
 	}
 	// TO DO
 	if(message.content.startsWith(prefix + "setRain")){	
-	
 	}
 
 	if(message.content.startsWith(prefix + "balance")){
-		var address = args[1];
+		let author = message.author.username;
+		let address = args[1];
+		if(address == null){
+			// show registered address balance
+			let data = getJson();
+			if(data[author]){
+				web3.eth.getBalance(data[author], (error,result)=>{
+					if(!error){
+						var balance = (result/Math.pow(10,18)).toFixed(3);
+						if(balance > 10000){
+								message.channel.send("This balance has: **" + balance + "** EXP, congrats, you are Exp whale.");
+						} else if(balance == 0){
+								message.channel.send("This balance empty, it has: **" + balance + "** EXP.");
+						} else {
+								message.channel.send("Your balance is **" + balance + "** EXP, you need more Exp  to became a whale.");
+						}
+					}
+				})
+				return
+			}
+		}
 		if(web3.utils.isAddress(args[1])){
 			web3.eth.getBalance(args[1], (error,result)=>{
 				if(!error){
@@ -190,7 +209,7 @@ bot.on('message',async message => {
 				message.channel.send("You already registered.");
 			}
 		} else {
-			message.channel.send("@" + author + " try to registered wrong address. Try another one.");
+			message.channel.send("@" + author + " tried to register wrong address. Try another one. Correct format is **/register 0xAddress**");
 		}
 	}
 
@@ -208,13 +227,13 @@ bot.on('message',async message => {
 					});	
 					message.channel.send("@" + author + " changed register address to the: " + address);
 				} else {
-					message.channel.send("Use another address if you wanna change old one.")
+					message.channel.send("Use another address if you're trying to change your old one.")
 				}
 			} else {
-				message.channel.send("You are not in the list, use **/register** command fist.");
+				message.channel.send("You are not on the list, register your address via **/register** first.");
 			}
 		} else {
-			message.channel.send("@"+author+" try to change with wrong address. Try another one.");
+			message.channel.send("@"+author+" tried to register with wrong address. Correct format is **/register 0xAddress**");
 		}
 	}
 	//-------------------------------------
