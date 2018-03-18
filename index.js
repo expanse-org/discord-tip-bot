@@ -239,7 +239,7 @@ bot.on('message',async message => {
 	//-------------------------------------
 	if(message.content == prefix + "list"){
 		var data = getJson();	
-		message.channel.send("Number of registered users is **" + Object.keys(data).length+ "**.");
+		message.channel.send("Total amount of registered users is **" + Object.keys(data).length+ "**.");
 
 	}
 	if(message.content == prefix + "checkRegister"){
