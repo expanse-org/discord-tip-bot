@@ -32,6 +32,34 @@ function sendCoins(address,value,message){
 	.on('error', console.error);
 }
 
+function raining(amount,message){
+	// registered users
+	var data = getJson();
+	// online users
+	var onlineUsers = getOnline();
+	// create online and register array
+		var onlineAndRegister = Object.keys(data).filter(username => {return onlineUsers.indexOf(username)!=-1});
+	 	// array with online addresses 	
+	var latest = [];
+	for (let user of onlineAndRegister) {
+	  if (data[user]) {
+	    latest.push(data[user]);
+	  }
+	}
+	// if use wrong amount (string or something)
+	var camount = amount/latest.length;
+	var weiAmount = camount*Math.pow(10,18);
+	
+	message.channel.send("**Rain started**.\n**" + amount + "** EXP will be distributed between online and regitered users - **" + latest.length + "** users." );
+	
+	function rainSend(addresses){
+		for(const address of addresses){
+			sendCoins(address,weiAmount,message);
+		}
+	}
+	// main function
+	rainSend(latest);
+}
 
 // return array with names of online users
 function getOnline(){
@@ -111,36 +139,30 @@ bot.on('message',async message => {
 		if(!message.member.hasPermission('ADMINISTRATOR')){
 			return message.channel.send("You cannot use '/rain' command");
 		} 
-		// registered users
-		var data = getJson();
-		// online users
-		var onlineUsers = getOnline();
-		// create online and register array
- 		var onlineAndRegister = Object.keys(data).filter(username => {return onlineUsers.indexOf(username)!=-1});
- 	 	// array with online addresses 	
-		var latest = [];
-		for (let user of onlineAndRegister) {
-		  if (data[user]) {
-		    latest.push(data[user]);
-		  }
-		}
-		var amount = Number(args[1])/latest.length;
-		// if use wrong amount (string or something)
+		var amount = Number(args[1]);
 		if (!amount) return message.channel.send("Error - you've entered wrong amount");
-		var weiAmount = amount*Math.pow(10,18);
+		// main func
+		raining(amount,message);
 		
-		message.channel.send("**Rain started**.\n**" + args[1] + "** EXP will be distributed between online and regitered users - **" + latest.length + "** users." );
-		
-		function rainSend(addresses){
-			for(const address of addresses){
-				sendCoins(address,weiAmount,message);
-			}
-		}
-		// main function
-		rainSend(latest);
 	}
-	// TO DO
-	if(message.content.startsWith(prefix + "setRain")){	
+	//
+	if(message.content.startsWith(prefix + "coming ")){
+		if(!message.member.hasPermission('ADMINISTRATOR')){
+			return message.channel.send("You cannot use '/rain' command");
+		} 	
+		let amount = Number(args[1]);
+		//if use wrong amount (string or something)
+		if(!amount) return message.channel.send("Error - you've entered wrong amount");
+		let time = Number(args[2])*3600000;
+		if(!time) return message.channel.send("Please, set hours correctly");
+		 // 1 hour = 3 600 000 milliseconds
+		message.channel.send("Raining will be after **" + args[2] + "** hours.");
+		
+		// main func
+		setTimeout(function(){
+			raining(amount,message);
+		},time);
+		
 	}
 
 	if(message.content.startsWith(prefix + "balance")){
@@ -258,6 +280,7 @@ bot.on('message',async message => {
 			"**"+prefix+"sendToAddress** *<address>* *<amount>* - send EXP to the following address (Admin Only)\n"+
 			"**"+prefix+"send** *<name>* *<amount>* send EXP to the following user (Admin Only)\n"+
 			"**"+prefix+"rain** *<amount>* - send EXP to all registered and online address's (Admin Only).\n"+
+			"**"+prefix+"coming** *<amount>* *<numOfHrs>* - rain will be after N hours (Admin Only). \n"+
 			"**"+prefix+"getaddress** - shows bot address so everyone can fund it. \n" + 
 			"**"+prefix+"register** *<address>*  - saves user address and name to db. \n"+
 			"**"+prefix+"changeRegister** *<address>* -  change your register address.\n"+
