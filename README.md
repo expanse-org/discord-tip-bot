@@ -1,4 +1,5 @@
-# ExpTipBot
+
+# discord-tip-bot
 
 Bot created for Expanse discord channel. <https://discord.me/expanse>.
 Bot use web3.js, so you need to run local node or another opened Expanse node.
@@ -26,6 +27,3 @@ Run local node with:
 Then run bot with:
 	
     node index.js
-
-
-
