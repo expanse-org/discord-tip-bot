@@ -19,7 +19,8 @@ bot.on('ready', ()=>{
 	console.log("Bot is ready for work");
 });
 
-function sendCoins(address,value,message){
+function sendCoins(address,value,message,name){
+
 	web3.eth.sendTransaction({
 	    from: botSettings.address,
 	    to: address,
@@ -27,10 +28,15 @@ function sendCoins(address,value,message){
 	    value: value
 	})
 	.on('transactionHash', function(hash){
-	    message.channel.send("HASH: http://www.gander.tech/tx/"+ hash );
+		// sent pm with their tx
+		// recive latest array
+		let author = bot.users.find('username',name);
+		author.send("Hi "+name+" , you are lucky man.\n Check hash: http://www.gander.tech/tx/"+ hash);
+	    //message.channel.send("HASH: http://www.gander.tech/tx/"+ hash );
 	})
 	.on('error', console.error);
 }
+
 
 function raining(amount,message){
 	// registered users
@@ -38,23 +44,25 @@ function raining(amount,message){
 	// online users
 	var onlineUsers = getOnline();
 	// create online and register array
-		var onlineAndRegister = Object.keys(data).filter(username => {return onlineUsers.indexOf(username)!=-1});
-	 	// array with online addresses 	
-	var latest = [];
+	var onlineAndRegister = Object.keys(data).filter(username => {return onlineUsers.indexOf(username)!=-1});
+	// create object with name - address and name - values
+	var latest = {};
 	for (let user of onlineAndRegister) {
 	  if (data[user]) {
-	    latest.push(data[user]);
+	    latest[data[user]] = user;
 	  }
 	}
 	// if use wrong amount (string or something)
-	var camount = amount/latest.length;
+	var camount = amount/Object.keys(latest).length;
 	var weiAmount = camount*Math.pow(10,18);
 	
-	message.channel.send("**Rain started**.\n**" + amount + "** EXP will be distributed between online and regitered users - **" + latest.length + "** users." );
+	message.channel.send("It just **rained** on **" + Object.keys(latest).length + "** users. Check pm's." );
 	
 	function rainSend(addresses){
-		for(const address of addresses){
-			sendCoins(address,weiAmount,message);
+		for(const address of Object.keys(addresses)){
+			
+			let name = addresses[address];
+			sendCoins(address,weiAmount,message,name);
 		}
 	}
 	// main function
@@ -75,18 +83,19 @@ function getOnline(){
 	return foo;
 }
 
-
 function getJson(){
 	return JSON.parse(fs.readFileSync('data/users.json'));
 }
 
 
-
 bot.on('message',async message => {
+	
 	// Not admins cannot use bot in general channel
 	if(message.channel.name === 'general' && !message.member.hasPermission('ADMINISTRATOR')) return;
 	if(message.author.bot) return;
 	if(message.channel.type === "dm") return;
+
+
 	var message = message;
 	let args = message.content.split(' ');
 
@@ -282,8 +291,6 @@ bot.on('message',async message => {
 			"**"+prefix+"rain** *<amount>* - send EXP to all registered and online address's (Admin Only).\n"+
 			"**"+prefix+"coming** *<amount>* *<numOfHrs>* - rain will be after N hours (Admin Only). \n"+
 			"**"+prefix+"getaddress** - shows bot address so everyone can fund it. \n" + 
-			"**"+prefix+"rain** *<amount>* - send EXP to all registered and online addresses (Admin Only).\n"+
-			"**"+prefix+"getaddress** - shows bot's address so everyone can fund it. \n" +
 			"**"+prefix+"register** *<address>*  - saves user address and name to db. \n"+
 			"**"+prefix+"changeRegister** *<address>* -  change your registered address.\n"+
 			"**"+prefix+"checkRegister** -  find whether you're registered or not.\n"+
