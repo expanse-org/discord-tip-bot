@@ -6,6 +6,9 @@ const BigNumber = require('bignumber.js');
 const Tx = require("ethereumjs-tx");
 const fs = require("fs");
 const botSettings = require("./config.json");
+const price = require("./price.js");
+// update price every 5 min
+setInterval(price,300000);
 
 const prefix = botSettings.prefix;
 
@@ -85,6 +88,9 @@ function getOnline(){
 
 function getJson(){
 	return JSON.parse(fs.readFileSync('data/users.json'));
+}
+function getPrice(){
+	return JSON.parse(fs.readFileSync('data/usdprice.txt'));
 }
 
 
@@ -175,6 +181,7 @@ bot.on('message',async message => {
 	}
 
 	if(message.content.startsWith(prefix + "balance")){
+		let price = getPrice();
 		let author = message.author.username;
 		let address = args[1];
 		if(address == null){
@@ -185,11 +192,11 @@ bot.on('message',async message => {
 					if(!error){
 						var balance = (result/Math.pow(10,18)).toFixed(3);
 						if(balance > 10000){
-								message.channel.send("This balance has: **" + balance + "** EXP, congrats, you are an EXP whale.");
+								message.channel.send("This balance has: **" + balance + "** EXP (or *"+new Intl.NumberFormat('us-US').format(parseInt(balance*price))+" USD*), congrats, you are an EXP whale.");
 						} else if(balance == 0){
 								message.channel.send("This balance empty, it has: **" + balance + "** EXP.");
 						} else {
-								message.channel.send("Your balance is **" + balance + "** EXP, you need more EXP  to become a whale.");
+								message.channel.send("Your balance is **" + balance + "** EXP (or *"+new Intl.NumberFormat('us-US').format(parseInt(balance*price))+" USD*), you need more EXP  to become a whale.");
 						}
 					}
 				})
@@ -201,11 +208,11 @@ bot.on('message',async message => {
 				if(!error){
 					var balance = (result/Math.pow(10,18)).toFixed(3);
 					if(balance > 10000){
-						message.channel.send("This balance has: **" + balance + "** EXP, congrats, you are Exp whale.");
+						message.channel.send("This balance has: **" + balance + "** EXP (or *"+new Intl.NumberFormat('us-US').format(parseInt(balance*price))+" USD*), congrats, you are Exp whale.");
 					} else if(balance == 0){
 						message.channel.send("This balance empty, it has: **" + balance + "** EXP.");
 					} else {
-						message.channel.send("Your balance is **" + balance + "** EXP, you need more EXP  to become a whale.");
+						message.channel.send("Your balance is **" + balance + "** EXP (or *"+new Intl.NumberFormat('us-US').format(parseInt(balance*price))+" USD*), you need more EXP  to become a whale.");
 					}
 				} else {
 					message.channel.send("Oops, some problem occured with your address.");
