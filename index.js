@@ -33,9 +33,14 @@ function sendCoins(address,value,message,name){
 	.on('transactionHash', function(hash){
 		// sent pm with their tx
 		// recive latest array
-		let author = bot.users.find('username',name);
-		author.send("Hi "+name+" , you are lucky man.\n Check hash: http://www.gander.tech/tx/"+ hash);
-	    //message.channel.send("HASH: http://www.gander.tech/tx/"+ hash );
+		if(name != 1){
+			let author = bot.users.find('username',name);
+			author.send("Hi "+name+" , you are lucky man.\n Check hash: http://www.gander.tech/tx/"+ hash);
+		} else {
+			message.channel.send("Tip was sent. \n Check hash: http://www.gander.tech/tx/"+ hash)
+		}
+		
+	    
 	})
 	.on('error', console.error);
 }
@@ -120,8 +125,8 @@ bot.on('message',async message => {
 				message.channel.send("You try to send more that 10 EXP.");
 			} else {
 				// main function
-				sendCoins(address,weiAmount,message);
 				message.channel.send("You try to send " + amount + " EXP to " + address + " address.");
+				sendCoins(address,weiAmount,message,1);
 			}
 		} else {
 			message.channel.send("Wrong address to send.");
@@ -141,9 +146,8 @@ bot.on('message',async message => {
 		let data = getJson();
 		if(Object.keys(data).includes(user)){
 			let address = data[user];
-			
-			sendCoins(address,weiAmount,message); // main function
 			message.channel.send("You try to send " + amount+ " EXP to @"+user  );
+			sendCoins(address,weiAmount,message,1); // main function
 		} else {
 			message.channel.send("This user is not registered.");
 		}
