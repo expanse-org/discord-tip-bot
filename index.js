@@ -5,7 +5,7 @@ const Discord = require("discord.js");
 const BigNumber = require('bignumber.js');
 const Tx = require("ethereumjs-tx");
 const fs = require("fs");
-const botSettings = require("./config.json");
+const botSettings = require("./my.json");
 const price = require("./price.js");
 // update price every 5 min
 setInterval(price,300000);
@@ -17,6 +17,7 @@ const bot = new Discord.Client({disableEveryone:true});
 var web3 = new Web3();
 
 web3.setProvider(new web3.providers.HttpProvider('http://localhost:9656'));
+
 
 bot.on('ready', ()=>{
 	console.log("Bot is ready for work");
@@ -48,7 +49,7 @@ function sendCoins(address,value,message,name){
 
 function raining(amount,message){
 	// registered users
-	var data = getJson();
+	var data = getJson('data/users.json');
 	// online users
 	var onlineUsers = getOnline();
 	// create online and register array
@@ -79,23 +80,20 @@ function raining(amount,message){
 
 // return array with names of online users
 function getOnline(){
-	var foo = [];
+	var onlineList = [];
 	var users = bot.users;
 	users.keyArray().forEach((val) => {
 		var userName = users.get(val).username;
 		var status = users.get(val).presence.status;
 		if(status == "online"){
-			foo.push(userName);
+			onlineList.push(userName);
 		}
 	});
-	return foo;
+	return onlineList;
 }
 
-function getJson(){
-	return JSON.parse(fs.readFileSync('data/users.json'));
-}
-function getPrice(){
-	return JSON.parse(fs.readFileSync('data/usdprice.txt'));
+function getJson(path){
+	return JSON.parse(fs.readFileSync(path));
 }
 
 
@@ -143,7 +141,7 @@ bot.on('message',async message => {
 		if (!amount) return message.channel.send("Error - you've entered wrong amount.");
 		
 		let weiAmount = amount*Math.pow(10,18);
-		let data = getJson();
+		let data = getJson('data/users.json');
 		if(Object.keys(data).includes(user)){
 			let address = data[user];
 			message.channel.send("You try to send " + amount+ " EXP to @"+user  );
@@ -185,38 +183,44 @@ bot.on('message',async message => {
 	}
 
 	if(message.content.startsWith(prefix + "balance")){
-		let price = getPrice();
+		let price = getJson('data/usdprice.txt');
 		let author = message.author.username;
 		let address = args[1];
 		if(address == null){
 			// show registered address balance
-			let data = getJson();
+			let data = getJson('data/users.json');
 			if(data[author]){
 				web3.eth.getBalance(data[author], (error,result)=>{
 					if(!error){
-						var balance = (result/Math.pow(10,18)).toFixed(3);
+						let balance = (result/Math.pow(10,18)).toFixed(3);
+						let usdBalace = new Intl.NumberFormat('us-US').format(parseInt(balance*price));
 						if(balance > 10000){
-								message.channel.send("This balance has: **" + balance + "** EXP (or *"+new Intl.NumberFormat('us-US').format(parseInt(balance*price))+" USD*), congrats, you are an EXP whale.");
+							message.channel.send(`This balance has: **${balance}** EXP (or *${usdBalace} USD*), congrats, you are an EXP whale. Address: ${data[author]}.`);
+						} else if(balance > 100 && balance < 1000) {
+							message.channel.send(`This balance has: **${balance}** EXP (or *${usdBalace} USD*), you are small Exp whale.Address: ${data[author]}.`)
+						} else if(balance > 1000 && balance < 3000) {
+							message.channel.send(`This balance has: **${balance}** EXP (or *${usdBalace} USD*), you are middle Exp whale.Address: ${data[author]}.`)
 						} else if(balance == 0){
-								message.channel.send("This balance empty, it has: **" + balance + "** EXP.");
+							message.channel.send(`This balance empty, it has: **${balance}** EXP.Addres: ${data[author]}.`);
 						} else {
-								message.channel.send("Your balance is **" + balance + "** EXP (or *"+new Intl.NumberFormat('us-US').format(parseInt(balance*price))+" USD*), you need more EXP  to become a whale.");
+							message.channel.send(`Your balance is **${balance}** EXP (or *${usdBalace} USD*), you need more EXP  to become a whale.Address: ${data[author]}.`);
 						}
 					}
 				})
 				return
-			}
+			} 
 		}
-		if(web3.utils.isAddress(args[1])){
-			web3.eth.getBalance(args[1], (error,result)=>{
+		if(web3.utils.isAddress(address)){
+			web3.eth.getBalance(address, (error,result)=>{
 				if(!error){
 					var balance = (result/Math.pow(10,18)).toFixed(3);
+					let usdBalace = new Intl.NumberFormat('us-US').format(parseInt(balance*price));
 					if(balance > 10000){
-						message.channel.send("This balance has: **" + balance + "** EXP (or *"+new Intl.NumberFormat('us-US').format(parseInt(balance*price))+" USD*), congrats, you are Exp whale.");
+						message.channel.send(`This balance has: **${balance}** EXP (or *${usdBalace} USD*), congrats, you are Exp whale. Address: ${address}.`);
 					} else if(balance == 0){
-						message.channel.send("This balance empty, it has: **" + balance + "** EXP.");
+						message.channel.send(`This balance empty, it has: **${balance}** EXP. Address: ${address}.`);
 					} else {
-						message.channel.send("Your balance is **" + balance + "** EXP (or *"+new Intl.NumberFormat('us-US').format(parseInt(balance*price))+" USD*), you need more EXP  to become a whale.");
+						message.channel.send(`Your balance is **${balance}** EXP (or *${usdBalace} USD*), you need more EXP  to become a whale. Address: ${address}.`);
 					}
 				} else {
 					message.channel.send("Oops, some problem occured with your address.");
@@ -237,7 +241,7 @@ bot.on('message',async message => {
 		var address = args[1];
 
 		if(web3.utils.isAddress(args[1])){	
-			var data = getJson();			
+			var data = getJson('data/users.json');			
 			if(!Object.values(data).includes(address) && !Object.keys(data).includes(author)){		
 				data[author] = address;
 				message.channel.send("@" + author + " registered new address: " + address);
@@ -259,7 +263,7 @@ bot.on('message',async message => {
 		var author = message.author.username;
 		var address = args[1];
 		if(web3.utils.isAddress(args[1])){
-			var data = getJson();
+			var data = getJson('data/users.json');
 			if(Object.keys(data).includes(author)){
 				if(address != data[author]){
 					data[author] = address;
@@ -280,13 +284,13 @@ bot.on('message',async message => {
 	}
 	//-------------------------------------
 	if(message.content == prefix + "list"){
-		var data = getJson();	
+		var data = getJson('data/users.json');	
 		message.channel.send("Total amount of registered users is **" + Object.keys(data).length+ "**.");
 
 	}
 	if(message.content == prefix + "checkRegister"){
 		let author = message.author.username;
-		let data = getJson();
+		let data = getJson('data/users.json');
 		if(Object.keys(data).includes(author)){
 			message.channel.send("@"+author + " already registered.");
 		} else {
