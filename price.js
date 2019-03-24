@@ -17,7 +17,7 @@ function getPrice(){
 		var marketcapInfo = dataCoin[0];
 		data.priceUSD  = marketcapInfo['price_usd'];
 
-		fs.writeFile("data/usdprice.txt",data.priceUSD,(err)=>{
+		fs.writeFile("usdprice.txt",data.priceUSD,(err)=>{
 			if(err) throw err;
 			//console.log('File with price was updated');
 		});
