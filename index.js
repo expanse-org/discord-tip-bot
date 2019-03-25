@@ -6,6 +6,7 @@ const Tx = require("ethereumjs-tx");
 const fs = require("fs");
 const botSettings = require("./config/config-bot.json");
 const price = require("./price.js");
+const n = require('nonce')();
 // update price every 5 min
 setInterval(price,300000);
 
@@ -45,11 +46,10 @@ async function sendCoins(authorId, toAddress, value, msg) {
 	if(balance < (amount+(0.0015*Math.pow(10,18)))) {
 		return { error: true, reason: `Insufficient balance, you have **${(balance/Math.pow(10,18)).toFixed(3)} EXP** *(Txfee is 0.0015 EXP)*`};
 	} 
-	const txsCount = await web3.eth.getTransactionCount(from.address);
 	const rawTx = {
-		nonce: web3.utils.toHex(txsCount),
+		nonce: web3.utils.toHex(n()),
 		to: toAddress,						 
-		gasPrice: web3.utils.toHex(1000000000),
+		gasPrice: web3.utils.toHex(10000000000),
 		gasLimit: web3.utils.toHex(120000),
 		value: amount,
 		data: '0x746970'
@@ -58,20 +58,23 @@ async function sendCoins(authorId, toAddress, value, msg) {
 	tx.sign(new Buffer(from.private_key,'hex'));
 	const serializeTx = tx.serialize();
 
-	try {
-		var txHash = await web3.eth.sendSignedTransaction(`0x${serializeTx.toString('hex')}`);
-	} catch(e) {
-		console.log(e);
-	}
-
-	if(!txHash.transactionHash) {
-		return { error: true, reason: "Error while tried to create transaction."};
-	} else {
-		return { error: false, hash: txHash.transactionHash };
-	}
+	const result = await sendSignedPromise(serializeTx)
+	console.log(result)
+	return result;
 }
 
-
+async function sendSignedPromise(serializeTx) {
+	return new Promise((resolve,reject) => {
+		web3.eth.sendSignedTransaction(`0x${serializeTx.toString('hex')}`)
+			.on('transactionHash', hash => {
+				resolve({error: false, hash: hash})
+			})
+			.on('error', error => {
+				console.log(error)
+				reject({error: true, reason: 'Internal Error'})
+			});
+	})
+}
 
 
 bot.on('message', async msg => {
@@ -99,6 +102,7 @@ bot.on('message', async msg => {
 		if(!reciever) return msg.reply('Wrong username, try another one');
 		// authorId, toAddress, value, msg
 		const result = await sendCoins(authorId, userAddress, amount, msg);
+		console.log(result)
 		if(result.error) return msg.reply(result.reason);
 		await changeStats(authorId, username_id, amount);
 		reciever.send(`You've successfully tipped. TX: <https://www.gander.tech/tx/${result.hash}>`);
@@ -171,16 +175,40 @@ bot.on('message', async msg => {
 		}
 	}
 
-	if(msg.content.startsWith(`${prefix}rain`)){		
+	if(msg.content.startsWith(`${prefix}rain `)){		
 		if(!msg.member.hasPermission('ADMINISTRATOR')){
 			return msg.channel.send("You cannot use '/rain' command");
 		} 
 		const amount = Number(args[1]);
 		if (!amount) return msg.channel.send("Error - you've entered wrong amount");
 		await raining(amount,msg);
-		
 	}
 	
+	// send to all registered beta-testers users
+	if(msg.content.startsWith(`${prefix}rainTesters`)) {
+		const value = Number(args[1]);
+		let amount = value/msg.channel.members.array().length;
+		if(!msg.member.hasPermission('ADMINISTRATOR')){
+			return msg.channel.send("You cannot use '/rain' command");
+		} 
+		if(msg.channel.name == 'general') {
+			const testersId = [];
+			msg.channel.members.filter(user => testersId.push(user.id));
+			for(let testerId of testersId) {
+				const isRegister = await Users.findOne({ where: { discord_id: testerId }});
+				if(!isRegister) return
+				const reciever = bot.users.find('id', isRegister.discord_id);
+				const result = await sendCoins(botSettings.adminId, isRegister.address, String(amount), msg);
+				console.log(result)
+				if(!result.error) {
+					reciever.send(`Hi ${isRegister.username}, thanks for beta-testing.\nTake a tip, TX: <http://www.gander.tech/tx/${result.hash}`);
+				} else {
+				  return msg.channel.send(result.reason);
+				}
+			}
+		}
+	}
+
 	// balance
 	if(msg.content.startsWith(`${prefix}balance`) || msg.content.startsWith(`${prefix}bal`)) {
 		const price = getJson();
@@ -226,6 +254,7 @@ bot.on('message', async msg => {
 			`**${prefix}topDonators** - shows the most active donators.\n`+
 			`**${prefix}topRecievers** - shows the luckiest receivers.\n`+
 			`**${prefix}rain** *<amount>* - send EXP to all registered and online address's (Admin Only).\n`+
+			`**${prefix}rainTesters** *<amount>* - send EXP to all beta-testers (Admin Only).\n`+
 			`**${prefix}stats** - show current Expanse Network Stats.`);
 	}
 })
@@ -286,5 +315,5 @@ function getJson(){
 	return JSON.parse(fs.readFileSync('./usdprice.txt'));
 }
 
-
+bot.on('error', console.error);
 bot.login(botSettings.token);
