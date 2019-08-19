@@ -1,5 +1,3 @@
-"use strcit";
-
 const Web3 = require("web3");
 const Discord = require("discord.js");
 const Tx = require("ethereumjs-tx");
@@ -52,14 +50,12 @@ async function sendCoins(authorId, toAddress, value, msg) {
 		gasPrice: web3.utils.toHex(10000000000),
 		gasLimit: web3.utils.toHex(120000),
 		value: amount,
-		data: '0x746970'
+		data: web3.utils.toHex('tib')
 	}
 	const tx = new Tx(rawTx);
-	tx.sign(new Buffer(from.private_key,'hex'));
+	tx.sign(new Buffer(from.private_key.slice(2),'hex'));
 	const serializeTx = tx.serialize();
-
 	const result = await sendSignedPromise(serializeTx)
-	console.log(result)
 	return result;
 }
 
@@ -78,7 +74,6 @@ async function sendSignedPromise(serializeTx) {
 
 
 bot.on('message', async msg => {
-
 	// Not admins cannot use bot in general channel
 	if(msg.channel.name === 'general' && !msg.member.hasPermission('ADMINISTRATOR')) return;
 	if(msg.author.bot) return;
@@ -86,7 +81,6 @@ bot.on('message', async msg => {
 
 	const args = msg.content.split(' ');
 	const authorId = msg.author.id;
-
 
 	// tip to discord username
 	if(msg.content.startsWith(`${prefix}tip`)) {
@@ -116,7 +110,6 @@ bot.on('message', async msg => {
 		const result = await sendCoins(authorId, toAddress, amount, msg);
 		if(result.error) return msg.reply(result.reason);
 		return msg.reply(`Successfully withdraw. TX: <https://www.gander.tech/tx/${result.hash}>`);
-
 	}
 
 	// get donate address
@@ -295,7 +288,6 @@ async function changeStats(senderId, recieverId, value) {
 		received: reciever.received + amount
 	})
 }
-
 
 // return array with id of online users
 function getOnline(){
